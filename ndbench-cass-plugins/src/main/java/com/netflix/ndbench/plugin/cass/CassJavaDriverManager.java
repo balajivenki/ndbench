@@ -17,6 +17,8 @@ import com.google.inject.ImplementedBy;
 public interface CassJavaDriverManager {
     Cluster registerCluster(String clName, String contactPoint, int connections, int port);
 
+    Cluster registerCluster(String clName, String contactPoint, int connections, int port, String username, String password);
+
     Session getSession(Cluster cluster);
 
     void shutDown();

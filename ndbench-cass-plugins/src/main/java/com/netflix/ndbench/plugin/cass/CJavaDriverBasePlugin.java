@@ -29,7 +29,7 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
     protected PropertyFactory propertyFactory;
 
     // settings
-    protected static String ClusterName, KeyspaceName, TableName, ClusterContactPoint;
+    protected static String ClusterName, KeyspaceName, TableName, ClusterContactPoint, username, password;
     int connections, port;
 
     protected ConsistencyLevel WriteConsistencyLevel=ConsistencyLevel.LOCAL_ONE, ReadConsistencyLevel=ConsistencyLevel.LOCAL_ONE;
@@ -57,6 +57,10 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
         KeyspaceName = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.keyspace").asString("dev1").get();
         TableName =propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cfname").asString("emp").get();
         port = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.host.port").asInteger(9042).get();
+
+        username = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cluster.username").asString("cassandra").get();
+        password = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cluster.password").asString("cassandra").get();
+
         connections = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.connections").asInteger(2).get();
 
         ReadConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.readConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
@@ -91,7 +95,11 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
 
         Logger.info("Cassandra  Cluster: " + ClusterName);
 
-        this.cluster = cassJavaDriverManager.registerCluster(ClusterName,ClusterContactPoint,connections,port);
+        if(username != null && password != null) {
+            this.cluster = cassJavaDriverManager.registerCluster(ClusterName, ClusterContactPoint, connections, port, username, password);
+        } else {
+            this.cluster = cassJavaDriverManager.registerCluster(ClusterName, ClusterContactPoint, connections, port);
+        }
         this.session = cassJavaDriverManager.getSession(cluster);
 
         upsertKeyspace(this.session);
