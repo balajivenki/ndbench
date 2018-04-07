@@ -16,18 +16,31 @@
  */
 package com.netflix.ndbench.plugin.dyno;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.netflix.archaius.api.PropertyFactory;
 import com.netflix.dyno.connectionpool.Host;
 import com.netflix.dyno.connectionpool.HostSupplier;
+import com.netflix.dyno.connectionpool.TokenMapSupplier;
+import com.netflix.dyno.connectionpool.impl.ConnectionPoolConfigurationImpl;
+import com.netflix.dyno.connectionpool.impl.lb.AbstractTokenMapSupplier;
 import com.netflix.dyno.jedis.DynoJedisClient;
 import com.netflix.ndbench.api.plugin.DataGenerator;
 import com.netflix.ndbench.api.plugin.NdBenchClient;
 import com.netflix.ndbench.api.plugin.annotations.NdBenchClientPlugin;
+import com.netflix.ndbench.api.plugin.common.NdBenchConstants;
+import com.netflix.ndbench.plugin.util.TokenMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,7 +58,23 @@ public class DynoJedis implements NdBenchClient {
 
     private DataGenerator dataGenerator;
 
+    private int totalNodes, dynoPort;
+
+    private final BigInteger totalTokens = new BigInteger("4294967295");
+
+    private String domain;
+
     private final AtomicReference<DynoJedisClient> jedisClient = new AtomicReference<DynoJedisClient>(null);
+
+    protected PropertyFactory propertyFactory;
+
+    private String localRack="rack01";
+    private String replicaRack="rack02";
+
+    @Inject
+    public DynoJedis(PropertyFactory propertyFactory) {
+        this.propertyFactory = propertyFactory;
+    }
 
     @Override
     public void init(DataGenerator dataGenerator) throws Exception {
@@ -58,24 +87,84 @@ public class DynoJedis implements NdBenchClient {
 
         logger.info("\nDynomite Cluster: " + ClusterName);
 
+        totalNodes = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "dyno.totalNodes").asInteger(6).get();
+        dynoPort = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "dyno.dynoPort").asInteger(50172).get();
+        domain = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "dyno.domain").asString(null).get();
+
         HostSupplier hSupplier = new HostSupplier() {
 
             @Override
             public List<Host> getHosts() {
 
                 List<Host> hosts = new ArrayList<Host>();
-                hosts.add(new Host("localhost", 8102, "local-dc", Host.Status.Up));
+                /**
+                 * now add the dyno hosts based on what we have. qredis is appended with two digit value of int
+                 * then append the domain name for host.
+                 * all even nodes are replica and odd are primary
+                 */
+                for (int i = 1; i <= totalNodes; i++) {
+                    String hostname = "qredis" + new DecimalFormat("00").format(i) + "." + domain;
+                    String rack = (i % 2 == 0) ? replicaRack : localRack;
+                    hosts.add(new Host(hostname, dynoPort, rack, Host.Status.Up));
+                }
 
                 return hosts;
             }
-
         };
 
         DynoJedisClient jClient = new DynoJedisClient.Builder().withApplicationName(ClusterName)
-                .withDynomiteClusterName(ClusterName).withHostSupplier(hSupplier).build();
+                .withDynomiteClusterName(ClusterName)
+                .withHostSupplier(hSupplier)
+                .withCPConfig(buildCpConfig())
+                .build();
 
         jedisClient.set(jClient);
 
+    }
+
+    public ConnectionPoolConfigurationImpl buildCpConfig() {
+        ConnectionPoolConfigurationImpl connectionPoolConfiguration =
+                new ConnectionPoolConfigurationImpl(ClusterName)
+                .withTokenSupplier(buildTokenSupplier());
+
+        connectionPoolConfiguration.setLocalRack(localRack);
+
+
+        return connectionPoolConfiguration;
+    }
+
+    public AbstractTokenMapSupplier buildTokenSupplier() {
+        List<TokenMapper> tokenMappers = Lists.newArrayList();
+
+        for(int i=1;i<=totalNodes;i++) {
+            String hostname = "qredis" + new DecimalFormat("00").format(i) + "." + domain;
+            String rack = (i % 2 == 0) ? replicaRack : localRack;
+            BigInteger tokenUnit = totalTokens.divide(BigInteger.valueOf(totalNodes/2));
+            int multiply = (i%(totalNodes/2));
+            BigInteger token = tokenUnit.multiply(BigInteger.valueOf(multiply));
+            tokenMappers.add(new TokenMapper(token.toString(), hostname, String.valueOf(dynoPort), rack, rack, ClusterName));
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        final String json;
+        try {
+            json = objectMapper.writeValueAsString(tokenMappers);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
+
+        return new AbstractTokenMapSupplier(localRack, dynoPort) {
+            public String getTopologyJsonPayload(Set<Host> activeHosts) {
+                return json;
+            }
+
+            @Override
+            public String getTopologyJsonPayload(String hostname) {
+                return json;
+            }
+        };
     }
 
     @Override
@@ -110,6 +199,7 @@ public class DynoJedis implements NdBenchClient {
 
     /**
      * Perform a bulk read operation
+     *
      * @return a list of response codes
      * @throws Exception
      */
@@ -119,6 +209,7 @@ public class DynoJedis implements NdBenchClient {
 
     /**
      * Perform a bulk write operation
+     *
      * @return a list of response codes
      * @throws Exception
      */

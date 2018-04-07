@@ -1,0 +1,5 @@
+{
+  "localhost": ["localhost:8087"],
+  "POD8-Cassdb": ["cassdb01.p08.eng.sjc01.qualys.com:50126","cassdb02.p08.eng.sjc01.qualys.com:50126", "cassdb03.p08.eng.sjc01.qualys.com:50126", "cassdb04.p08.eng.sjc01.qualys.com:50126", "cassdb05.p08.eng.sjc01.qualys.com:50126"],
+  "POD8-Dynomite": ["qredis01.p08.eng.sjc01.qualys.com:50172", "qredis03.p08.eng.sjc01.qualys.com:50172", "qredis05.p08.eng.sjc01.qualys.com:50172"]
+}
