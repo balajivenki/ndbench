@@ -52,6 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Singleton
 public class NdBenchDriver {
     private static final Logger Logger = LoggerFactory.getLogger(NdBenchDriver.class);
+    public static final int TIMEOUT = 5;
 
     private final AtomicInteger readWorkers = new AtomicInteger(0);
     private final AtomicInteger writeWorkers = new AtomicInteger(0);
@@ -102,7 +103,7 @@ public class NdBenchDriver {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                System.err.println("*** shutting down NdBench server since JVM is shutting down");
+                Logger.info("*** shutting down NdBench server since JVM is shutting down");
                 NdBenchDriver.this.stop();
                 try {
                     NdBenchDriver.this.shutdownClient();
@@ -226,7 +227,7 @@ public class NdBenchDriver {
             throw new RuntimeException("Unknown threadpool when performing tpRef CAS operation");
         }
 
-        System.out.println("\n\nWorker threads: " + numWorkersConfig + ", Num Keys: " + config.getNumKeys() + "\n\n");
+        Logger.info("\n\nWorker threads: " + numWorkersConfig + ", Num Keys: " + config.getNumKeys() + "\n\n");
 
         for (int i = 0; i < numWorkersConfig; i++) {
 
@@ -258,7 +259,7 @@ public class NdBenchDriver {
                     } // eo if read or write
 
                     if (noMoreKey) {
-                        Logger.info("No more keys to process, hence stopping the process.");
+                        Logger.info("No more keys to process, hence stopping this thread.");
                         if (operation.isReadType()) {
                             stopReads();
                         } else if (operation.isWriteType()) {
@@ -317,10 +318,10 @@ public class NdBenchDriver {
                 Logger.info("Waiting for worker pool to stop, sleeping for 5 to 10 seconds");
 
                 // Wait a while for existing tasks to terminate
-                if (!tp.awaitTermination(5, TimeUnit.SECONDS)) {
+                if (!tp.awaitTermination(TIMEOUT, TimeUnit.SECONDS)) {
                     tp.shutdownNow(); // Cancel currently executing tasks
                     // Wait a while for tasks to respond to being cancelled
-                    if (!tp.awaitTermination(5, TimeUnit.SECONDS))
+                    if (!tp.awaitTermination(TIMEOUT, TimeUnit.SECONDS))
                         Logger.error("Error while shutting down executor service : ");
                 }
                 Logger.info("Threadpool has terminated!");
