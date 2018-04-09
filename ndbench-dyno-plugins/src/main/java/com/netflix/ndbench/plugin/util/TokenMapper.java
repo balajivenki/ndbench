@@ -18,14 +18,5 @@ public class TokenMapper {
     private String rack;
     private String zone;
     private String dc;
-/*
-    public TokenMapper(String token, String hostname, String port, String rack, String zone, String dc) {
-        this.token = token;
-        this.hostname = hostname;
-        this.port = port;
-        this.rack = rack;
-        this.zone = zone;
-        this.dc = dc;
-    }*/
 }
 
