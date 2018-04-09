@@ -25,11 +25,13 @@ dependencies {
 Properties development_properties = new Properties()
 development_properties.load(new FileInputStream(file("src/main/resources/laptop.properties")))
 gretty {
+    httpPort=8089
     contextPath = '/'
     servletContainer = 'tomcat8'
     systemProperties = development_properties
     scanDirs = ['**/src/main/webapp/**']
     scanDependencies = true
+    jvmArgs=['-Dndbench.config.dataSize=100', '-Darchaius.configurationSource.additionalUrls=file:///Users/bvenkatesan/stash/ndbench/ndbench-core/src/main/resources/application.properties']
     // More properties can be found here:
     // http://akhikhl.github.io/gretty-doc/Gretty-configuration.html
 }

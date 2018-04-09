@@ -61,6 +61,8 @@ public class CassAstyanaxPlugin implements NdBenchClient{
     private String ClusterName, ClusterContactPoint ,
             KeyspaceName, ColumnFamilyName;
 
+    private int ClusterPort;
+
     private ConsistencyLevel WriteConsistencyLevel=ConsistencyLevel.CL_LOCAL_ONE;
     private ConsistencyLevel ReadConsistencyLevel=ConsistencyLevel.CL_LOCAL_ONE;
 
@@ -87,6 +89,7 @@ public class CassAstyanaxPlugin implements NdBenchClient{
 
         ClusterName = propertyFactory.getProperty(PROP_NAMESPACE + "cass.cluster").asString("localhost").get();
         ClusterContactPoint = propertyFactory.getProperty(PROP_NAMESPACE + "cass.host").asString("127.0.0.1").get();
+        ClusterPort = propertyFactory.getProperty(PROP_NAMESPACE + "cass.host.port").asInteger(50126).get();
         KeyspaceName = propertyFactory.getProperty(PROP_NAMESPACE + "cass.keyspace").asString("dev1").get();
         ColumnFamilyName =propertyFactory.getProperty(PROP_NAMESPACE + "cass.cfname").asString("emp_thrift").get();
 
@@ -111,9 +114,9 @@ public class CassAstyanaxPlugin implements NdBenchClient{
                         .setDiscoveryType(NodeDiscoveryType.RING_DESCRIBE)
                 )
                 .withConnectionPoolConfiguration(new ConnectionPoolConfigurationImpl("MyConnectionPool")
-                        .setPort(9160)
+                        .setPort(ClusterPort)
                         .setMaxConnsPerHost(1)
-                        .setSeeds(ClusterContactPoint+":9160")
+                        .setSeeds(ClusterContactPoint+":"+ClusterPort)
                 )
                 .withConnectionPoolMonitor(new CountingConnectionPoolMonitor())
                 .buildKeyspace(ThriftFamilyFactory.getInstance());
