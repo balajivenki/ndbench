@@ -70,14 +70,23 @@ public class DynoClientHelper {
     public static AbstractTokenMapSupplier buildTokenSupplier(int totalNodes, String domain, BigInteger totalTokens, int dynoPort) {
         List<TokenMapper> tokenMappers = Lists.newArrayList();
 
+        BigInteger tokenUnit = totalTokens.divide(BigInteger.valueOf(totalNodes / 2));
+        int seq = 0;
         for (int i = 1; i <= totalNodes; i++) {
-            String hostname = "qredis" + new DecimalFormat("00").format(i) + "." + domain;
-            String rack = (i % 2 == 0) ? replicaRack : localRack;
-            BigInteger tokenUnit = totalTokens.divide(BigInteger.valueOf(totalNodes / 2));
-            int multiply = (i % (totalNodes / 2));
-            multiply = (multiply == 0) ? (totalNodes / 2) : multiply;
-            BigInteger token = tokenUnit.multiply(BigInteger.valueOf(multiply));
-            tokenMappers.add(new TokenMapper(token.toString(), hostname, String.valueOf(dynoPort), rack, rack, ClusterName));
+            seq++;
+            int j=i+1;
+            String hostname;
+            BigInteger token = tokenUnit.multiply(BigInteger.valueOf(seq));
+
+
+            hostname = "qredis" + new DecimalFormat("00").format(i) + "." + domain;
+            //add primary
+            tokenMappers.add(new TokenMapper(token.toString(), hostname, String.valueOf(dynoPort), localRack, localRack, ClusterName));
+
+            hostname = "qredis" + new DecimalFormat("00").format(j) + "." + domain;
+            //add replica
+            tokenMappers.add(new TokenMapper(token.toString(), hostname, String.valueOf(dynoPort), replicaRack, replicaRack, ClusterName));
+            i = j;
         }
 
         ObjectMapper objectMapper = new ObjectMapper();

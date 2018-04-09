@@ -83,6 +83,8 @@ public class DynamoDBKeyValue implements NdBenchClient {
             logger.error("Discovery Environment Variable: " + discoveryEnv);
         if (discoveryEnv == null || discoveryEnv.equals(NdBenchConstants.DISCOVERY_ENV_AWS)) {
             awsCredentialsProvider = credential;
+        } else if(discoveryEnv.endsWith(NdBenchConstants.DISCOVERY_ENV_AWS_CONFIG_FILE)) {
+            //do nothing
         } else {
             awsCredentialsProvider = new ProfileCredentialsProvider();
             try {
