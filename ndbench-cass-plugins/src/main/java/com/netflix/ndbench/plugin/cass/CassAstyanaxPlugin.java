@@ -89,7 +89,7 @@ public class CassAstyanaxPlugin implements NdBenchClient{
 
         ClusterName = propertyFactory.getProperty(PROP_NAMESPACE + "cass.cluster").asString("localhost").get();
         ClusterContactPoint = propertyFactory.getProperty(PROP_NAMESPACE + "cass.host").asString("127.0.0.1").get();
-        ClusterPort = propertyFactory.getProperty(PROP_NAMESPACE + "cass.host.port").asInteger(50126).get();
+        ClusterPort = propertyFactory.getProperty(PROP_NAMESPACE + "cass.host.thrift.port").asInteger(9160).get();
         KeyspaceName = propertyFactory.getProperty(PROP_NAMESPACE + "cass.keyspace").asString("dev1").get();
         ColumnFamilyName =propertyFactory.getProperty(PROP_NAMESPACE + "cass.cfname").asString("emp_thrift").get();
 
