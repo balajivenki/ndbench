@@ -36,7 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -240,8 +242,8 @@ public class NdBenchDriver {
                             (operation.isWriteType() && writesStarted.get())) {
                         if (rateLimiter.get().tryAcquire()) {
 
-                            List<String> keys = new ArrayList<>(bulkSize);
-                            for (int j = 0; j < bulkSize; j++) {
+                            final Set<String> keys = new HashSet<>(bulkSize * 2);
+                            while (keys.size() < bulkSize) {
                                 keys.add(keyGenerator.getNextKey());
                                 if (!keyGenerator.hasNextKey()) {
                                     noMoreKey = true;
@@ -252,7 +254,7 @@ public class NdBenchDriver {
                             operation.process(
                                     NdBenchDriver.this,
                                     ndBenchMonitor,
-                                    keys,
+                                    new ArrayList<>(keys),
                                     rateLimiter,
                                     isAutoTuneEnabled);
                         } // eo rateLimiter tryGet
@@ -507,18 +509,19 @@ public class NdBenchDriver {
             ndBenchMonitor.setWriteRPS(writeRps);
             ndBenchMonitor.setReadRPS(readRps);
 
-            Logger.info("Read RPS: " + readRps + ", Write RPS: " + writeRps +
-                    ", total RPS: " + (readRps + writeRps) + ", Success Ratio: " + sRatio + "%");
+            Logger.info("Read avg: "  + (double) ndBenchMonitor.getReadLatAvg() / 1000.0  + "ms, Read RPS: "  + readRps
+                    + ", Write avg: " + (double) ndBenchMonitor.getWriteLatAvg() / 1000.0 + "ms, Write RPS: " + writeRps
+                    + ", total RPS: " + (readRps + writeRps) + ", Success Ratio: " + sRatio + "%");
             long expectedReadRate = (long) this.readLimiter.get().getRate();
             long expectedwriteRate = (long) this.writeLimiter.get().getRate();
             String bottleneckMsg = "If this occurs consistently the benchmark client could be the bottleneck.";
 
-            if (readsStarted.get() && readRps < expectedReadRate) {
-                Logger.warn("Observed Read RPS  ({}) less than expected read rate + ({}).\n{}",
+            if (this.config.isReadEnabled() && readsStarted.get() && readRps < expectedReadRate) {
+                Logger.warn("Observed Read RPS ({}) less than expected read rate + ({}).\n{}",
                         readRps, expectedReadRate, bottleneckMsg);
             }
-            if (writesStarted.get() && writeRps < expectedwriteRate) {
-                Logger.warn("Observed Write RPS  ({}) less than expected write rate + ({}).\n{}",
+            if (this.config.isWriteEnabled() && writesStarted.get() && writeRps < expectedwriteRate) {
+                Logger.warn("Observed Write RPS ({}) less than expected write rate + ({}).\n{}",
                         writeRps, expectedwriteRate, bottleneckMsg);
             }
         }
