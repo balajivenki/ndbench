@@ -32,7 +32,7 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
     protected static String ClusterName, KeyspaceName, TableName, ClusterContactPoint, username, password;
     int connections, port;
 
-    protected ConsistencyLevel WriteConsistencyLevel=ConsistencyLevel.LOCAL_ONE, ReadConsistencyLevel=ConsistencyLevel.LOCAL_ONE;
+    protected ConsistencyLevel WriteConsistencyLevel = ConsistencyLevel.LOCAL_ONE, ReadConsistencyLevel = ConsistencyLevel.LOCAL_ONE;
 
 
     protected final CassJavaDriverManager cassJavaDriverManager;
@@ -52,38 +52,38 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
     public void init(DataGenerator dataGenerator) throws Exception {
         this.dataGenerator = dataGenerator;
 
-        ClusterName = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cluster").asString("localhost").get();
-        ClusterContactPoint = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.host").asString("127.0.0.1").get();
-        KeyspaceName = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.keyspace").asString("dev1").get();
-        TableName =propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cfname").asString("emp").get();
+        ClusterName = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cluster").asString("localhost").get();
+        ClusterContactPoint = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.host").asString("127.0.0.1").get();
+        KeyspaceName = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.keyspace").asString("dev1").get();
+        TableName = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cfname").asString("emp").get();
         port = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.host.port").asInteger(9042).get();
 
-        username = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cluster.username").asString("cassandra").get();
-        password = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cluster.password").asString("cassandra").get();
+        username = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cluster.username").asString("cassandra").get();
+        password = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cluster.password").asString("cassandra").get();
 
-        connections = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.connections").asInteger(2).get();
+        connections = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.connections").asInteger(2).get();
 
-        ReadConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.readConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
-        WriteConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.writeConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
+        ReadConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.readConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
+        WriteConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.writeConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
 
-       MaxColCount  = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.colsPerRow").asLong(100L).get();
+        MaxColCount = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.colsPerRow").asLong(100L).get();
 
-       preInit();
-       initDriver();
-       postInit();
-       prepStatements(this.session);
+        preInit();
+        initDriver();
+        postInit();
+        prepStatements(this.session);
     }
 
 
     @Override
     public void shutdown() throws Exception {
-            this.cassJavaDriverManager.shutDown();
+        this.cassJavaDriverManager.shutDown();
     }
 
     @Override
     public String getConnectionInfo() throws Exception {
         return String.format("Cluster Name - %s : Keyspace Name - %s : CF Name - %s ::: ReadCL - %s : WriteCL - %s ", ClusterName, KeyspaceName, TableName
-                ,ReadConsistencyLevel,WriteConsistencyLevel);
+                , ReadConsistencyLevel, WriteConsistencyLevel);
     }
 
     @Override
@@ -95,7 +95,7 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
 
         Logger.info("Cassandra  Cluster: " + ClusterName);
 
-        if(username != null && password != null) {
+        if (username != null && password != null) {
             this.cluster = cassJavaDriverManager.registerCluster(ClusterName, ClusterContactPoint, connections, port, username, password);
         } else {
             this.cluster = cassJavaDriverManager.registerCluster(ClusterName, ClusterContactPoint, connections, port);
@@ -106,15 +106,18 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
         upsertCF(this.session);
     }
 
-   abstract void prepStatements(Session session);
-   abstract void upsertKeyspace(Session session);
-   abstract void upsertCF(Session session);
-   abstract void preInit();
-   abstract void postInit();
+    abstract void prepStatements(Session session);
 
-   protected void upsertGenereicKeyspace()
-   {
-       session.execute("CREATE KEYSPACE IF NOT EXISTS " +KeyspaceName+" WITH replication = {'class': 'SimpleStrategy','replication_factor': '1'};");
-       session.execute("Use " + KeyspaceName);
-   }
+    abstract void upsertKeyspace(Session session);
+
+    abstract void upsertCF(Session session);
+
+    abstract void preInit();
+
+    abstract void postInit();
+
+    protected void upsertGenereicKeyspace() {
+        session.execute("CREATE KEYSPACE IF NOT EXISTS " + KeyspaceName + " WITH replication = {'class': 'SimpleStrategy','replication_factor': '1'};");
+        session.execute("Use " + KeyspaceName);
+    }
 }
