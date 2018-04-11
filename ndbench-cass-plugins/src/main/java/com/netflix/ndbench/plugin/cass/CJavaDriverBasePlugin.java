@@ -74,6 +74,10 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
         prepStatements(this.session);
     }
 
+    protected String getTableName(String property) {
+        return propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass." + property).asString("emp").get();
+    }
+
 
     @Override
     public void shutdown() throws Exception {

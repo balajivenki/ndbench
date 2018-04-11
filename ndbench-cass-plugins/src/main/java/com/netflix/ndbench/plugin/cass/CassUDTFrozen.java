@@ -44,6 +44,8 @@ public class CassUDTFrozen extends CJavaDriverBasePlugin {
 
     private UserType fullnameType, emailType, addressType;
 
+    private static final String TableProperty = "cfname.udt";
+
     @Override
     void preInit() {
         ADDRESS_TYPE = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.udt.address_type").asString("address_type").get();
@@ -80,29 +82,29 @@ public class CassUDTFrozen extends CJavaDriverBasePlugin {
 
         session.execute("CREATE TYPE IF NOT EXISTS  " + EMAIL_TYPE + " (fp text, domain text)");
 
-        session.execute("CREATE TABLE IF NOT EXISTS  " + TableName + " ( id text PRIMARY KEY, name frozen <fullname_type>, emails set<frozen <email_type>>, billing_addresses map<text, frozen <address_type>>, account_type text)");
+        session.execute("CREATE TABLE IF NOT EXISTS  " + getTableName(TableProperty) + " ( id text PRIMARY KEY, name frozen <fullname_type>, emails set<frozen <email_type>>, billing_addresses map<text, frozen <address_type>>, account_type text)");
     }
 
 
     @Override
     void prepStatements(Session session) {
-        readPstmt1 = session.prepare(" SELECT * FROM " + TableName + " WHERE id = ?");
-        readPstmt2 = session.prepare(" SELECT name.lastname FROM " + TableName + " WHERE id = ?");
-        readPstmt3 = session.prepare(" SELECT emails, billing_addresses FROM " + TableName + " WHERE id = ?");
+        readPstmt1 = session.prepare(" SELECT * FROM " + getTableName(TableProperty) + " WHERE id = ?");
+        readPstmt2 = session.prepare(" SELECT name.lastname FROM " + getTableName(TableProperty) + " WHERE id = ?");
+        readPstmt3 = session.prepare(" SELECT emails, billing_addresses FROM " + getTableName(TableProperty) + " WHERE id = ?");
 
-        insertPstmt1 = session.prepare("INSERT INTO " + TableName + " (id, name, account_type) VALUES  (?, ?, ?)");
+        insertPstmt1 = session.prepare("INSERT INTO " + getTableName(TableProperty) + " (id, name, account_type) VALUES  (?, ?, ?)");
 
 
-        updatePstmt1 = session.prepare("UPDATE " + TableName + " SET billing_addresses = billing_addresses + ? " +
+        updatePstmt1 = session.prepare("UPDATE " + getTableName(TableProperty) + " SET billing_addresses = billing_addresses + ? " +
                 ", emails = emails + ? WHERE id = ?");
 
 
-        casPstmt1 = session.prepare("UPDATE " + TableName + " SET billing_addresses = billing_addresses + ? WHERE id = ?                   if account_type='Paid'");
+        casPstmt1 = session.prepare("UPDATE " + getTableName(TableProperty) + " SET billing_addresses = billing_addresses + ? WHERE id = ?                   if account_type='Paid'");
 
         //casPstmt2 = session.prepare("UPDATE "+TableName+" SET emails = emails - ? WHERE id = ? if exists");
-        casPstmt2 = session.prepare("UPDATE " + TableName + " SET emails = emails - ? WHERE id = ? ");
+        casPstmt2 = session.prepare("UPDATE " + getTableName(TableProperty) + " SET emails = emails - ? WHERE id = ? ");
 
-        updatePstmt2 = session.prepare("UPDATE " + TableName + " SET billing_addresses = billing_addresses - ? WHERE id = ?");
+        updatePstmt2 = session.prepare("UPDATE " + getTableName(TableProperty) + " SET billing_addresses = billing_addresses - ? WHERE id = ?");
 
     }
 

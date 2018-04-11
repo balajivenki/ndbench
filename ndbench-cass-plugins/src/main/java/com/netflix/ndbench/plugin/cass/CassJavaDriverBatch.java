@@ -13,6 +13,7 @@ import com.netflix.ndbench.api.plugin.common.NdBenchConstants;
 import java.time.Instant;
 import java.util.List;
 import java.util.Random;
+
 /**
  * @author vchella
  */
@@ -26,6 +27,8 @@ public class CassJavaDriverBatch extends CJavaDriverBasePlugin {
     private static Boolean useTimeStamp;
     private static Boolean useMultiPartition;
 
+    private static final String TableProperty = "cfname.batch";
+
     Random randomObj = new Random();
 
     protected PreparedStatement writePstmt2;
@@ -38,10 +41,10 @@ public class CassJavaDriverBatch extends CJavaDriverBasePlugin {
     @Override
     void prepStatements(Session session) {
 
-        readPstmt = session.prepare(" SELECT cyclist_name, expense_id, amount, description, paid FROM "+TableName+" WHERE cyclist_name = ?" );
+        readPstmt = session.prepare(" SELECT cyclist_name, expense_id, amount, description, paid FROM " + getTableName(TableProperty) + " WHERE cyclist_name = ?");
 
-        writePstmt = session.prepare("INSERT INTO "+TableName+" (cyclist_name, expense_id, amount, description, paid) VALUES (?, ?, ?, ?, ?)");
-        writePstmt2 = session.prepare("INSERT INTO "+TableName2+" (expense_id, cyclist_name) VALUES (?, ?)");
+        writePstmt = session.prepare("INSERT INTO " + getTableName(TableProperty) + " (cyclist_name, expense_id, amount, description, paid) VALUES (?, ?, ?, ?, ?)");
+        writePstmt2 = session.prepare("INSERT INTO " + TableName2 + " (expense_id, cyclist_name) VALUES (?, ?)");
 
 
     }
@@ -53,16 +56,16 @@ public class CassJavaDriverBatch extends CJavaDriverBasePlugin {
 
     @Override
     void upsertCF(Session session) {
-        session.execute("CREATE TABLE IF NOT EXISTS "+TableName+" (cyclist_name text, balance float STATIC, expense_id int, amount float, description text, paid boolean, PRIMARY KEY (cyclist_name, expense_id) )");
-        session.execute("CREATE TABLE IF NOT EXISTS "+TableName2+" (expense_id int, cyclist_name text, PRIMARY KEY (expense_id, cyclist_name)) ");
+        session.execute("CREATE TABLE IF NOT EXISTS " + getTableName(TableProperty) + " (cyclist_name text, balance float STATIC, expense_id int, amount float, description text, paid boolean, PRIMARY KEY (cyclist_name, expense_id) )");
+        session.execute("CREATE TABLE IF NOT EXISTS " + TableName2 + " (expense_id int, cyclist_name text, PRIMARY KEY (expense_id, cyclist_name)) ");
     }
 
     @Override
     void preInit() {
-        TableName2  = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.cfname2").asString("test2").get();
-        batchSize = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.batchSize").asInteger(3).get();
-        useTimeStamp = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.useTimestamp").asBoolean(true).get();
-        useMultiPartition = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.useMultiPartition").asBoolean(false).get();
+        TableName2 = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cfname2").asString("test2").get();
+        batchSize = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.batchSize").asInteger(3).get();
+        useTimeStamp = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.useTimestamp").asBoolean(true).get();
+        useMultiPartition = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.useMultiPartition").asBoolean(false).get();
     }
 
     @Override
@@ -98,27 +101,21 @@ public class CassJavaDriverBatch extends CJavaDriverBasePlugin {
         for (int i = 0; i < this.batchSize; i++) {
 
             BoundStatement bStmt;
-            if(useMultiPartition)
-            {
-                if(randomObj.nextBoolean())
-                {
-                 bStmt = getBStmtTable1(key);
-                }
-                else
-                {
+            if (useMultiPartition) {
+                if (randomObj.nextBoolean()) {
+                    bStmt = getBStmtTable1(key);
+                } else {
                     bStmt = getBStmtTable2(key);
                 }
-            }
-            else
-            {
+            } else {
                 bStmt = getBStmtTable1(key);
             }
 
             bStmt.setConsistencyLevel(this.WriteConsistencyLevel);
             batch.add(bStmt);
         }
-        if(useTimeStamp) {
-            batch.setDefaultTimestamp(Instant.now().toEpochMilli()*1000);
+        if (useTimeStamp) {
+            batch.setDefaultTimestamp(Instant.now().toEpochMilli() * 1000);
         }
         session.execute(batch);
         batch.clear();
@@ -127,6 +124,7 @@ public class CassJavaDriverBatch extends CJavaDriverBasePlugin {
 
     /**
      * Perform a bulk read operation
+     *
      * @return a list of response codes
      * @throws Exception
      */
@@ -136,6 +134,7 @@ public class CassJavaDriverBatch extends CJavaDriverBasePlugin {
 
     /**
      * Perform a bulk write operation
+     *
      * @return a list of response codes
      * @throws Exception
      */
@@ -153,8 +152,7 @@ public class CassJavaDriverBatch extends CJavaDriverBasePlugin {
         return bStmt;
     }
 
-    private BoundStatement getBStmtTable2(String key)
-    {
+    private BoundStatement getBStmtTable2(String key) {
         BoundStatement bStmt = writePstmt.bind();
         bStmt.setInt("expense_id", this.dataGenerator.getRandomIntegerValue());
         bStmt.setString("cyclist_name", key);

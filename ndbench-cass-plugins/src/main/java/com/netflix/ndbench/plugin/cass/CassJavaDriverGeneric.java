@@ -34,6 +34,8 @@ public class CassJavaDriverGeneric extends CJavaDriverBasePlugin {
 
     private static final org.slf4j.Logger Logger = LoggerFactory.getLogger(CassJavaDriverGeneric.class);
 
+    private static final String TableProperty = "cfname.generic";
+
 
     @Inject
     public CassJavaDriverGeneric(PropertyFactory propertyFactory, CassJavaDriverManager cassJavaDriverManager) {
@@ -50,16 +52,14 @@ public class CassJavaDriverGeneric extends CJavaDriverBasePlugin {
         bStmt.setString("key", key);
         bStmt.setConsistencyLevel(this.ReadConsistencyLevel);
         ResultSet rs = session.execute(bStmt);
-        List<Row> result=rs.all();
+        List<Row> result = rs.all();
 
-        if (!result.isEmpty())
-        {
+        if (!result.isEmpty()) {
             nCols = result.size();
             if (nCols < (this.MaxColCount)) {
                 throw new Exception("Num Cols returned not ok " + nCols);
             }
-        }
-        else {
+        } else {
             return CacheMiss;
         }
 
@@ -76,7 +76,7 @@ public class CassJavaDriverGeneric extends CJavaDriverBasePlugin {
             bStmt.setString("value", this.dataGenerator.getRandomValue());
             batch.add(bStmt);
         }
-    batch.setConsistencyLevel(this.WriteConsistencyLevel);
+        batch.setConsistencyLevel(this.WriteConsistencyLevel);
         session.execute(batch);
         batch.clear();
         return ResultOK;
@@ -84,6 +84,7 @@ public class CassJavaDriverGeneric extends CJavaDriverBasePlugin {
 
     /**
      * Perform a bulk read operation
+     *
      * @return a list of response codes
      * @throws Exception
      */
@@ -93,6 +94,7 @@ public class CassJavaDriverGeneric extends CJavaDriverBasePlugin {
 
     /**
      * Perform a bulk write operation
+     *
      * @return a list of response codes
      * @throws Exception
      */
@@ -102,11 +104,12 @@ public class CassJavaDriverGeneric extends CJavaDriverBasePlugin {
 
     @Override
     void upsertKeyspace(Session session) {
-       upsertGenereicKeyspace();
+        upsertGenereicKeyspace();
     }
+
     @Override
     void upsertCF(Session session) {
-        session.execute("CREATE TABLE IF NOT EXISTS "+TableName+" (key text, column1 int, value text, PRIMARY KEY ((key), column1))");
+        session.execute("CREATE TABLE IF NOT EXISTS " + getTableName(TableProperty) + " (key text, column1 int, value text, PRIMARY KEY ((key), column1))");
 
     }
 
@@ -123,8 +126,8 @@ public class CassJavaDriverGeneric extends CJavaDriverBasePlugin {
 
     @Override
     void prepStatements(Session session) {
-        writePstmt = session.prepare("INSERT INTO "+TableName+" (key, column1 , value ) VALUES (?, ?, ? )");
-        readPstmt = session.prepare("Select * From "+TableName+" Where key = ?");
+        writePstmt = session.prepare("INSERT INTO " + getTableName(TableProperty) + " (key, column1 , value ) VALUES (?, ?, ? )");
+        readPstmt = session.prepare("Select * From " + getTableName(TableProperty) + " Where key = ?");
     }
 
 }
