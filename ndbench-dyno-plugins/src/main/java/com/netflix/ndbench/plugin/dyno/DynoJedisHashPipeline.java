@@ -22,11 +22,8 @@ import com.netflix.dyno.jedis.DynoJedisClient;
 import com.netflix.ndbench.api.plugin.DataGenerator;
 import com.netflix.ndbench.api.plugin.NdBenchClient;
 import com.netflix.ndbench.api.plugin.annotations.NdBenchClientPlugin;
-<<<<<<< HEAD
 import com.netflix.ndbench.plugin.util.DynoClientHelper;
-=======
 import org.slf4j.Logger;
->>>>>>> Netflix/master
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
@@ -37,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * size MAX_PIPE_KEYS against Dynomite.
  *
  * @author ipapapa
- *
  */
 @Singleton
 @NdBenchClientPlugin("DynoHashPipeline")
@@ -88,6 +84,7 @@ public class DynoJedisHashPipeline implements NdBenchClient {
 
     /**
      * Perform a bulk read operation
+     *
      * @return a list of response codes
      * @throws Exception
      */
@@ -97,6 +94,7 @@ public class DynoJedisHashPipeline implements NdBenchClient {
 
     /**
      * Perform a bulk write operation
+     *
      * @return a list of response codes
      * @throws Exception
      */

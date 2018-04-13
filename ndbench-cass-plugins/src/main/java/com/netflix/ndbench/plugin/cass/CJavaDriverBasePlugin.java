@@ -30,12 +30,9 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
     protected PropertyFactory propertyFactory;
 
     // settings
-<<<<<<< HEAD
+
     protected static String ClusterName, KeyspaceName, TableName, ClusterContactPoint, username, password;
-=======
-    protected static String ClusterName, KeyspaceName, TableName, ClusterContactPoint;
-    protected static String username, password;
->>>>>>> Netflix/master
+
     int connections, port;
 
     protected ConsistencyLevel WriteConsistencyLevel = ConsistencyLevel.LOCAL_ONE, ReadConsistencyLevel = ConsistencyLevel.LOCAL_ONE;
@@ -64,21 +61,13 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
         TableName = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cfname").asString("emp").get();
         port = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.host.port").asInteger(9042).get();
 
-<<<<<<< HEAD
-        username = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cluster.username").asString("cassandra").get();
-        password = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.cluster.password").asString("cassandra").get();
-=======
-        username = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.username").asString(null).get();
-        password = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.password").asString(null).get();
-
-        ReadConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.readConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
-        WriteConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE +"cass.writeConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
->>>>>>> Netflix/master
-
-        connections = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.connections").asInteger(2).get();
+        username = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.username").asString(null).get();
+        password = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.password").asString(null).get();
 
         ReadConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.readConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
         WriteConsistencyLevel = ConsistencyLevel.valueOf(propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.writeConsistencyLevel").asString(ConsistencyLevel.LOCAL_ONE.toString()).get());
+
+        connections = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.connections").asInteger(2).get();
 
         MaxColCount = propertyFactory.getProperty(NdBenchConstants.PROP_NAMESPACE + "cass.colsPerRow").asLong(100L).get();
 
@@ -113,15 +102,13 @@ public abstract class CJavaDriverBasePlugin implements NdBenchClient {
 
         logger.info("Cassandra  Cluster: " + ClusterName);
 
-<<<<<<< HEAD
+
         if (username != null && password != null) {
             this.cluster = cassJavaDriverManager.registerCluster(ClusterName, ClusterContactPoint, connections, port, username, password);
         } else {
             this.cluster = cassJavaDriverManager.registerCluster(ClusterName, ClusterContactPoint, connections, port);
         }
-=======
-        this.cluster = cassJavaDriverManager.registerCluster(ClusterName,ClusterContactPoint,connections,port,username,password);
->>>>>>> Netflix/master
+
         this.session = cassJavaDriverManager.getSession(cluster);
 
         upsertKeyspace(this.session);
