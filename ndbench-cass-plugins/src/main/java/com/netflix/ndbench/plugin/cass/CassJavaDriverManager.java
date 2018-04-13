@@ -12,10 +12,14 @@ import com.google.inject.ImplementedBy;
  */
 @ImplementedBy(CassJavaDriverManagerImpl.class)
 public interface CassJavaDriverManager {
+    Cluster registerCluster(String clName, String contactPoint, int connections, int port, String username, String password);
     Cluster registerCluster(String clName, String contactPoint, int connections, int port);
+<<<<<<< HEAD
 
     Cluster registerCluster(String clName, String contactPoint, int connections, int port, String username, String password);
 
+=======
+>>>>>>> Netflix/master
     Session getSession(Cluster cluster);
 
     void shutDown();
